@@ -1,33 +1,31 @@
 "use client"
 import { useUser } from '@clerk/nextjs'
 import React, { useEffect } from 'react'
+import { useRouter } from 'next/navigation';
 import { db } from '../configs/db'
 import { Users } from '../configs/schema'
 import { eq } from 'drizzle-orm'
 
 function Provider({ children }) {
-  const { user } = useUser()
+  const { user } = useUser();
+  const router = useRouter();
 
   useEffect(() => {
-    user&&isNewUser();
+    if (!user) {
+      isNewUser()
+    }
   }, [user]);
 
-    const isNewUser = async () => {
-      
-        const result = await db.select().from(Users)
-          .where(eq(Users.email, user?.primaryEmailAddress?.emailAddress))
-        console.log(result)
+  const isNewUser = async () => {
 
-        if (!result[0]) {
-          await db.insert(Users).values({
-            email: user?.primaryEmailAddress?.emailAddress,
-            name: user?.fullName,
-            imageUrl: user?.imageUrl, // match schema!
-          })
-        }
+    const returnedUser = await db.select().from(Users)
+      .where(eq(Users.email, user?.primaryEmailAddress?.emailAddress))
+
+    if (returnedUser.length === 0) {
+      router.push('/sign-up');
+
     }
-    
-  
+  }
 
   return <>{children}</>
 }
